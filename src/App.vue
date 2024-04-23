@@ -1,56 +1,18 @@
 
 <template>
-  <div>
-    <!-- <h1>Welcome to my fitness App</h1> -->
-    <input v-model="searchedBodyPart" type="text" placeholder="chest">
-    <!--  @click="fetchData" -->
-    <!--  -->
-    <button @click="fetchData">get exercise</button>
-    <div class="card flex justify-content-center">
-        <h3>Filter By</h3>
-        <Dropdown v-model="searchedBodyPart" :options="items"  placeholder="Body Part" style="width: 150px;" />
-
-    </div>
-
-
-
-
-    <div v-if="exerciseData">
-      <h2>Exercise Data</h2>
-      <ul>
-        <li v-for="exercise in exerciseData" :key="exercise.id" style="display: flex;">
-          <div>
-            <h3>{{ exercise.name }}</h3>
-            <p>Body Part: {{ exercise.bodyPart }}</p>
-            <p>Target: {{ exercise.target }}</p>
-            <!-- <p>Gif URL: <a :href="exercise.gifUrl">{{ exercise.gifUrl }}</a></p> -->
-            <p>Instructions:</p>
-            <ul>
-              <li v-for="(instruction, index) in exercise.instructions" :key="index">
-                {{ instruction }}
-              </li>
-            </ul>
-          </div>
-          
-          <div><img :src="exercise.gifUrl" alt="Example GIF"></div>
-          
-        </li>
-      </ul>
-    </div>
-  </div>
+    <currentDayPage/>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-
-// import {AutoComplete} from 'primevue/autocomplete';
+import currentDayPage from './views/currentDayPage.vue'
 
 export default {
 
-  // components: {
-  //   AutoComplete,
-  // },
+  components: {
+    currentDayPage,
+  },
 
   setup() {
     const items = ref(["chest", "back", "lower legs", "upper legs", "upper arms", "lower arms", "shoulders", "cardio", "neck"]);
