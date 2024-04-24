@@ -74,6 +74,25 @@ app.post('/api/saveExercises/:bodyPartName', async (req, res) => {
   }
 });
 
+// Endpoint to get random  exercises by body part
+app.get('/api/randomExercises/:bodyPartName', async (req, res) => {
+  const { bodyPartName } = req.params;
+
+  try {
+    const exercises = await Exercise.findAll({
+      where: { '$BodyPart.name$': bodyPartName }, // Filter by body part name
+      include: [{ model: BodyPart, where: { name: bodyPartName } }], // Include the associated body part
+      order: Sequelize.literal('random()'), // Order randomly
+      limit: 15 // Limit to 10 exercises
+    });
+
+    res.json(exercises);
+  } catch (error) {
+    console.error('Error fetching random exercises:', error);
+    res.status(500).send('Error fetching random exercises');
+  }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

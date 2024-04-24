@@ -1,15 +1,37 @@
 <template>
+  <div class="container">
     <div class="title-bar" :style="{ backgroundColor: TitleColor }">
-        <h3>{{ currentDay }}</h3>
-        <p style="color: white; font-size: medium;">{{ motivationalMessage }}</p>
+      <h1 style="color: white; margin-bottom: 0px">{{ currentDay }}</h1>
+      <p style="color: white; font-size: medium;">{{ motivationalMessage }}</p>
     </div>
-    <div class="display-exercises" :style="{backgroundColor: bodyColor }">
-        
+    <div class="display-exercises" :style="{ backgroundColor: bodyColor }">
+        <div class="searchExer">
+          <input type="text" v-model="bodyPart">
+          <button @click="fetchExercises(bodyPart)">Find</button>
+        </div>
+        <div v-for="exercise in exercises" :key="exercise.id" :title="exercise.name" style="display: flex; flex-direction: column; ">
+            <!-- {{ console.log(exercise.instructions)}} -->
+            <!-- {{ formatToString(exercise.instructions) }} -->
+            <div style="display: flex; height: 40%;">
+              <div  style="width: 60%; margin-left: 20px;" >
+                 <h1>{{ exercise.name }}</h1>
+                  <div v-for="(instruction, index) in exercise.instructions" :key="index" class="instruction">
+                    <h4>{{ index + 1 }}. {{ instruction }}</h4>
+                  </div>
+              </div>
+              <div style="padding: 20px; border-radius: 10px;  margin: 10px;" :style="{backgroundColor: TitleColor}">
+                  <img :src="exercise.gifUrl" alt="" style="border-radius: 10px; ">
+              </div>
+            </div>
+        </div>
     </div>
-  </template>
-  
+  </div>
+</template>
+  <!-- to display the instruction nicely, terraform script to make registry, graph theory start -->
   <script setup>
-    import {ref} from 'vue';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+
 
 
 
@@ -19,6 +41,8 @@
     const randomIndex = Math.floor(Math.random() * color.length);
     return color[randomIndex];
   };
+
+
 
   const currentDay = ref(getCurrentDay());
   const motivationalMessage = ref(getRandomMotivationalMessage());
@@ -34,7 +58,7 @@
     return `rgba(${newR}, ${newG}, ${newB}, ${opacity})`;
 }
 
-
+  const bodyPart = ref("back");
 function getRandomMotivationalMessage() {
   const messages = [
     "Stay committed to your workouts!",
@@ -54,30 +78,51 @@ function getCurrentDay() {
   return days[today.getDay()];
 }
 
+
+const exercises = ref([]);
+
+async function fetchExercises(bodyPart, ) {
+  try {
+    const response = await axios.get(`http://localhost:3000/api/randomExercises/${bodyPart}`);
+    exercises.value = response.data;
+    // console.log(exercises.value.instructions);
+    // formatToString(exercises.value.instructions);
+
+  } catch (error) {
+    console.error('Error fetching exercises:', error);
+  }
+}
+
+onMounted(() => {
+  fetchExercises("back");
+});
+
+
   const TitleColor = getRandomColor();
   const bodyColor = lightenColor(TitleColor, 30, 0.5);
   </script>
 
 
   <style>
-  .title-bar {
-    height: 22vh;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
   
-  .title-bar h3 {
-    font-size: 42px; /* Adjust font size as needed */
-    margin-bottom: 8px; /* Add spacing between h3 and p */
-    color: white;
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
 
-  }
-  
-  .display-exercises {
-    height: 70vh;
-    width: 100%;
-  }
+.title-bar {
+  /* Your title bar styles */
+  height: 30vh; /* Adjust height as needed */
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.display-exercises {
+  /* Your display exercises styles */
+  flex-grow: 1; /* This makes the div grow to fill the remaining space */
+  overflow-y: auto; /* Enable vertical scrolling when content overflows */
+}
   </style>
