@@ -6,6 +6,39 @@ const cors = require('cors')
 const app = express();
 const PORT = 3000;
 const fs = require('fs');
+app.use(json());
+app.use(cors());
+let bodyParams = [];
+
+
+
+app.post('/search', async(req, res) => {
+  try {
+    const {bodyPart, muscleQuery, equipQuery} = req.body;
+    const exercises = await findExercises(bodyPart, muscleQuery, equipQuery);
+    res.json(exercises);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send('error');
+  }
+});
+
+
+const findExercises = async (bodyPart, muscleQuery, equipQuery) => {
+  const fileString = bodyPart.replace(/\s+/g, '');
+  const data = JSON.parse(fs.readFileSync(`${fileString}.json`, 'utf8'));
+
+  const muscleQueries = muscleQuery ? muscleQuery.split(',').map(item => item.trim().toLowerCase()) : [];
+  const equipQueries = equipQuery ? equipQuery.split(',').map(item => item.trim().toLowerCase()) : [];
+
+  const filteredExercises = data.filter(exercise => {
+    const hasMatchingMuscle = muscleQueries.length === 0 || muscleQueries.some(query => exercise.secondaryMuscles.map(m => m.toLowerCase()).includes(query));
+    const hasMatchingEquipment = equipQueries.length === 0 || equipQueries.some(query => exercise.equipment.toLowerCase().includes(query));
+    return hasMatchingMuscle && hasMatchingEquipment;
+  });
+
+  return filteredExercises;
+};
 function saveToJson(data, bodypart){
   console.log("Inside the Function");
   if(data){
@@ -17,6 +50,7 @@ function saveToJson(data, bodypart){
       }
   }
 }
+
 // Connect to PostgreSQL database
 const sequelize = new Sequelize('postgres://postgres:12345@localhost:5432/fitnessdb');
 
@@ -42,39 +76,7 @@ sequelize.sync()
     console.error('Error synchronizing database:', error);
   });
 
-// Middleware to parse JSON requests
-app.use(json());
-app.use(cors());
-// Endpoint to save exercises to PostgreSQL database
-app.post('/api/saveExercises/:bodyPartName', async (req, res) => {
-  const { bodyPartName } = req.params;
-  const exercises = req.body;
 
-  try {
-    // Find or create the body part
-    let bodyPart = await BodyPart.findOne({ where: { name: bodyPartName } });
-    if (!bodyPart) {
-      bodyPart = await BodyPart.create({ name: bodyPartName });
-    }
-    console.log("Before Calling Function...");
-    // saveToJson(exercises, bodyPartName);
-    // Save exercises associated with the body part
-    // await Exercise.bulkCreate(exercises.map(exercise => ({
-    //   name: exercise.name,
-    //   gifUrl: exercise.gifUrl,
-    //   instructions: exercise.instructions,
-    //   BodyPartId: bodyPart.id
-    // }))
-    // );
-
-    res.status(201).send('Exercises saved to database successfully');
-  } catch (error) {
-    console.error('Error saving exercises to database:', error);
-    res.status(500).send('Error saving exercises to database');
-  }
-});
-
-// Endpoint to get random  exercises by body part
 app.get('/api/randomExercises/:bodyPartName', async (req, res) => {
   const { bodyPartName } = req.params;
 
@@ -83,7 +85,7 @@ app.get('/api/randomExercises/:bodyPartName', async (req, res) => {
       where: { '$BodyPart.name$': bodyPartName }, // Filter by body part name
       include: [{ model: BodyPart, where: { name: bodyPartName } }], // Include the associated body part
       order: Sequelize.literal('random()'), // Order randomly
-      limit: 15 // Limit to 10 exercises
+      limit: 15 // Limit to 15 exercises
     });
 
     res.json(exercises);
@@ -92,6 +94,50 @@ app.get('/api/randomExercises/:bodyPartName', async (req, res) => {
     res.status(500).send('Error fetching random exercises');
   }
 });
+
+const searchFunction = (searchQuery, extraParam="defaultForNow!") => {
+ 
+  if(extraParam.type === "bodyParts"){
+    const bodyParts = ["back", "chest", "cardio", "lower legs", "upper legs", "shoulders", "upper arms"];
+    // searchQuery is String
+    let searchResult = bodyParts.filter(str => searchQuery.charAt(0).toLowerCase() === str.charAt(0));
+    if(searchResult.length === 1) return searchResult;
+    let restQuery = searchQuery.substring(1);
+    let restQuerySet = new Set(restQuery);
+    let optimisedResult = [];
+    let maxCount = 0;
+    searchResult.forEach(str => {
+
+      if(str.filter(char => restQuerySet.has(char)).length > maxCount){
+        maxCount = str.filter(char => restQuerySet.has(char)).length;
+        optimisedResult = [str];
+      }
+      else if(str.filter(char => restQuerySet.has(char)).length === maxCount){
+        optimisedResult.push(str);
+      }
+    });
+    return optimisedResult;
+  }
+
+  else if(extraParam.type === "targetMuscles"){
+    // by here the default param => v-model of bodyPart => 
+      bodyPartParam.forEach(bodyParam => {
+        if(bodyParam.bodyPart.includes(searchQuery)){
+          return bodyParam.targetmuscle;
+        }
+      })
+  }
+
+  else{
+    bodyPartParam.forEach(bodyParam => {
+      if(bodyParam.bodyPart.includes(searchQuery)){
+        return bodyParam.equipment;
+      }
+    })
+  }
+
+  
+}
 
 // Start the server
 app.listen(PORT, () => {
