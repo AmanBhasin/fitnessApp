@@ -6,10 +6,11 @@
             placeholder="BodyPart"
             @focus=""
             @input="onInputChange"
+            @click="onInputChange"
             class="input-field"
         >
            
-        <ul class="dropdown">
+        <ul class="dropdown" v-if="bdpArray.length > 0">
             <li v-if="bdpArray.length>0" v-for="(value, index) in bdpArray" :key="index" @click="bodyPart = value; bdpArray = []">
                 {{ value }}
             </li>
@@ -74,13 +75,16 @@ const showMuscleDropdown = ref(false);
 const exerciseStore = useExerciseStore();
 
 const bodyParts = ["back", "chest", "cardio", "lower legs", "upper legs", "shoulders", "arms"];
-bdpArray.value = bodyParts;
+// bdpArray.value = bodyParts;
 const testFunction = (e) => {
     console.log("focus has happened!");
     console.log(e);
 }
 
 const searchExercisesSubmit = async () => {
+
+    showMuscleDropdown.value = false;
+    showEquipmentDropdown.value = false;
     try {
         const res = await axios.post('http://localhost:3000/search', {
             bodyPart: bodyPart.value,

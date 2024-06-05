@@ -9,12 +9,21 @@
         <searchComponent/>
       </div>
       <div v-for="exercise in filteredExercises" :key="exercise.id" :title="exercise.name" class="exercise-card">
+
+        <!-- some other component -->
         <div class="exercise-content">
           <div class="exercise-info">
             <h2>{{ exercise.name }}</h2>
             <div v-for="(instruction, index) in exercise.instructions" :key="index" class="instruction">
               <h4>{{ index + 1 }}. {{ instruction }}</h4>
             </div>
+            <br>
+            <h3 v-for="(mus, index) in exercise.secondaryMuscles" :key="index">
+              {{ mus }}
+            </h3>
+
+            <!-- prop => adding to the workout plan
+             -->
           </div>
           <div class="exercise-image" :style="{ backgroundColor: TitleColor }">
             <img :src="exercise.gifUrl" alt="" />
